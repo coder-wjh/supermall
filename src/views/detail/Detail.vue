@@ -10,6 +10,8 @@
       <detail-comment-info ref="comment" :commentInfo="commentInfo" />
       <goods-list ref="recommend" :goods="recommends" />
     </scroll>
+    <detail-bottom-bar @addCart="addToCart" />
+    <back-top @click.native="backClick"  v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -21,13 +23,14 @@ import DetailShopInfo from './childComps/DetailShopInfo'
 import DetailGoodsInfo from './childComps/DetailGoodsInfo'
 import DetailParamInfo from './childComps/DetailParamInfo'
 import DetailCommentInfo from './childComps/DetailCommentInfo'
+import DetailBottomBar from './childComps/DetailBottomBar'
 
 import Scroll from "components/common/scroll/Scroll"
 import GoodsList from "components/content/goods/GoodsList"
 
 import {getDetail,Goods,Shop,GoodsParams,getRecommend} from 'network/detail'
 import {debounce} from 'common/utils'
-import {itemListenerMixin} from 'common/mixin'
+import {itemListenerMixin,backTopMixin} from 'common/mixin'
 
 export default {
   name: 'Detail',
@@ -39,10 +42,11 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
+    DetailBottomBar,
     Scroll,
-    GoodsList
+    GoodsList,
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin,backTopMixin],
   data() {
     return {
       iid: null,
@@ -55,7 +59,7 @@ export default {
       recommends: [],
       themeTopYs: [],
       getThemeTopY: null,
-      currentIndex: 0
+      currentIndex: 0,
     }
   },
   created() {
@@ -126,6 +130,7 @@ export default {
       this.themeTopYs.push(this.$refs.params.$el.offsetTop-44)
       this.themeTopYs.push(this.$refs.comment.$el.offsetTop-44)
       this.themeTopYs.push(this.$refs.recommend.$el.offsetTop-44)
+      this.themeTopYs.push(Number.MAX_VALUE)
 
       console.log(this.themeTopYs);
     },100)
@@ -156,20 +161,18 @@ export default {
 
       // 2.positionY和主题中值进行对比
       let length = this.themeTopYs.length
-      // for(let i in this.themeTopYs) {
-      //   if(positionY > this.themeTopYs[i] && positionY < this.themeTopYs[+i+1]) {
-          
-      //   }
-      // }
-      for(let i = 0 ; i < length ; i++){
-        if(this.currentIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[+i+1])
-        || (i === length - 1 && positionY >= this.themeTopYs[i]))){
+      for(let i = 0 ; i < length-1 ; i++){
+        if(this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[+i+1])){
           this.currentIndex = i
           this.$refs.nav.currentIndex = this.currentIndex
         }
       }
 
-      
+      // 3.显示回到顶部
+      this.isShowBackTop = position.y < -1000
+    },
+    addToCart() {
+      console.log('--');
     }
   }
 }
@@ -191,6 +194,7 @@ export default {
   }
 
   .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 93px);
+    overflow: hidden;
   }
 </style>
