@@ -3,7 +3,7 @@
     <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav"/>
     <scroll class="content" ref="scroll" @scroll="contentScroll" :probe-type="3" >
       <detail-swiper :topImages="topImages"/>
-      <detail-base-info :goods="goods" />
+      <detail-base-info :goods="goodsInfo" />
       <detail-shop-info :shop="shop"/>
       <detail-goods-info :detail-info="detailInfo" @imgLoad="imgLoad"/>
       <detail-param-info ref="params" :paramInfo="paramInfo"/>
@@ -12,6 +12,7 @@
     </scroll>
     <detail-bottom-bar @addCart="addToCart" />
     <back-top @click.native="backClick"  v-show="isShowBackTop"/>
+    <!-- <toast :message='message' :show="show"/> -->
   </div>
 </template>
 
@@ -27,10 +28,14 @@ import DetailBottomBar from './childComps/DetailBottomBar'
 
 import Scroll from "components/common/scroll/Scroll"
 import GoodsList from "components/content/goods/GoodsList"
+// import Toast from 'components/common/toast/Toast'
 
 import {getDetail,Goods,Shop,GoodsParams,getRecommend} from 'network/detail'
 import {debounce} from 'common/utils'
 import {itemListenerMixin,backTopMixin} from 'common/mixin'
+
+import {mapActions} from 'vuex'
+
 
 export default {
   name: 'Detail',
@@ -45,13 +50,14 @@ export default {
     DetailBottomBar,
     Scroll,
     GoodsList,
+    // Toast
   },
   mixins: [itemListenerMixin,backTopMixin],
   data() {
     return {
       iid: null,
       topImages: [],
-      goods: {},
+      goodsInfo: {},
       shop: {},
       detailInfo: {},
       paramInfo: {},
@@ -60,6 +66,8 @@ export default {
       themeTopYs: [],
       getThemeTopY: null,
       currentIndex: 0,
+      // message: "",
+      // show:false
     }
   },
   created() {
@@ -73,7 +81,7 @@ export default {
       this.topImages = data.itemInfo.topImages
 
       // 2.获取商品信息
-      this.goods = new Goods(data.itemInfo,data.columns,data.shopInfo.services)
+      this.goodsInfo = new Goods(data.itemInfo,data.columns,data.shopInfo.services)
 
       // 3.创建店铺信息的对象
       this.shop = new Shop(data.shopInfo)
@@ -132,11 +140,10 @@ export default {
       this.themeTopYs.push(this.$refs.recommend.$el.offsetTop-44)
       this.themeTopYs.push(Number.MAX_VALUE)
 
-      console.log(this.themeTopYs);
+      // console.log(this.themeTopYs);
     },100)
   },
   mounted() {
-    
   },
   updated(){
     
@@ -147,6 +154,7 @@ export default {
   },
 
   methods: {
+    ...mapActions(['addCart']),
     imgLoad() {
       this.$refs.scroll.refresh()
 
@@ -172,7 +180,34 @@ export default {
       this.isShowBackTop = position.y < -1000
     },
     addToCart() {
-      console.log('--');
+      // 1.获取购物车需要展示的信息
+      const product = {}
+      product.image = this.topImages[0]
+      product.title = this.goodsInfo.title
+      product.desc = this.goodsInfo.desc
+      product.price = this.goodsInfo.realPrice
+      product.iid = this.iid
+
+      // 2.将商品添加到购物车
+      // this.$store.commit('addCart',product) 传入mutations
+      // this.$store.dispatch('addCart',product).then (res => {
+      //   console.log(res);
+      // })// dispatch传入actions
+
+      // 使用mapActions映射获取store的actions的方法
+      this.addCart(product).then(res => {
+        // this.show = true
+        // this.message = res
+
+        // setTimeout(() => {
+        //   this.show = false
+        //   this.message = ''
+        // },1500)
+
+        this.$toast.show(res,1500)
+        // console.log(this.$toast);
+      })
+
     }
   }
 }

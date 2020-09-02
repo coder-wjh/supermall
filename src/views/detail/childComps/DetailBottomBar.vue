@@ -27,7 +27,7 @@ export default {
   name: 'DetailBottomBar',
   methods: {
     addCart(){
-      this.$emit("addCart",)
+      this.$emit("addCart")
     }
   }
 }
